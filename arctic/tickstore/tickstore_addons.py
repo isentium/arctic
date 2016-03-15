@@ -21,17 +21,18 @@ import pandas as pd
 
 import time
 
-def addTZ(date):
-     '''
-     Adds the local timezone to a datetime request if there is no datetime
+def addTZ(_date):
+    '''
+    Adds the local timezone to a datetime request if there is no datetime
+    @param: date; datetime; the datetime to convert
+    @return: datetime object with timezone or None if datetime not passed
+    '''
 
-     @param: date; datetime; the datetime to convert 
-
-     @return: datetime object with timezone or None if datetime not passed
-     '''
-     if date and not date.tzinfo:
-          date = date.replace(tzinfo = tzlocal.get_localzone())
-     return date
+    if _date and not _date.tzinfo:
+        eastern = pytz.timezone('US/Eastern')
+        _date = eastern.localize(_date, is_dst=None)
+        # _date = tzlocal.get_localzone().localize(_date, is_dst=None)
+    return _date
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -43,11 +44,12 @@ def append(df, subject, library):
      @param: subject; string; the subject to change
      @param: library; Arctic lib; where to make changes
      '''
+
      df.index.names = ['index']
 
      if df.index[0].tzinfo is None:
           df.index = df.index.tz_localize(tzlocal.get_localzone())
-    
+
      df.index = df.index.tz_convert(pytz.utc)
 
      bucket_data = library.read_latest(subject)
@@ -61,7 +63,7 @@ def append(df, subject, library):
           df = df[df.index > last_date]
           if len(df) == 0:
               return
-     
+
      for col in df:
          library._ensure_supported_dtypes(df[col])
 
